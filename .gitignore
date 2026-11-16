@@ -12,7 +12,8 @@ dist
 dist-ssr
 *.local
 .vercel
-backend/__pycache__
+__pycache__/
+*.py[cod]
 
 # Editor directories and files
 .vscode/*
