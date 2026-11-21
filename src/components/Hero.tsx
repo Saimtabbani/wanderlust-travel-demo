@@ -83,7 +83,7 @@ export default function Hero({ onSearch }: HeroProps) {
   }
 
   return (
-    <section className="relative min-h-screen hero-gradient flex flex-col items-center justify-center px-4 sm:px-6 pt-28 sm:pt-32 pb-20 overflow-hidden">
+    <section className="relative min-h-[calc(100svh-72px)] hero-gradient flex flex-col items-center justify-center px-4 sm:px-6 py-16 sm:py-20 overflow-hidden">
       {/* Background orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />

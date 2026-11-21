@@ -6,10 +6,9 @@
   }
   html {
     scroll-behavior: smooth;
-    /* Offset all anchor jumps by the fixed navbar height so headings
-       never land hidden behind the bar. 80px covers both the collapsed
-       (py-3 ≈ 56px) and expanded (py-5 ≈ 68px) navbar states with margin. */
-    scroll-padding-top: 96px;
+    /* Leave a small visual gap when jumping to a section below the sticky
+       navigation, which occupies layout space and never overlays content. */
+    scroll-padding-top: 16px;
   }
   body {
     margin: 0;
