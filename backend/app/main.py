@@ -9,6 +9,7 @@ from .routes.destinations import router as destinations_router
 from .routes.endorsements import router as endorsements_router
 from .routes.recommendations import router as recommendations_router
 from .routes.auth import router as auth_router
+from .routes.catalog_admin import router as catalog_admin_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,6 +54,7 @@ app.include_router(destinations_router, prefix="/api")
 app.include_router(endorsements_router, prefix="/api")
 app.include_router(recommendations_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+app.include_router(catalog_admin_router, prefix="/api")
 
 @app.get("/api/health", tags=["system"])
 def health_check(db: Session = Depends(get_db)):

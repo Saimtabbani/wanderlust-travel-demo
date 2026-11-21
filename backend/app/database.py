@@ -19,13 +19,16 @@ else:
     DB_PATH = SOURCE_DB_PATH
 # A managed database URL is intentionally configurable for a production
 # deployment. SQLite remains the checked-in demo default.
-SQLALCHEMY_DATABASE_URL = os.getenv("WANDERLUST_DATABASE_URL", f"sqlite:///{DB_PATH.as_posix()}")
+SQLALCHEMY_DATABASE_URL = os.getenv("WANDERLUST_DATABASE_URL") or os.getenv("DATABASE_URL") or f"sqlite:///{DB_PATH.as_posix()}"
+# Neon publishes a standard PostgreSQL URL. Select SQLAlchemy's psycopg 3
+# dialect explicitly so the deployed Python service uses the pooled endpoint.
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = "postgresql+psycopg://" + SQLALCHEMY_DATABASE_URL[len("postgresql://"):]
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},  # Needed for SQLite in multi-threaded FastAPI
-    echo=False
-)
+engine_options = {"echo": False, "pool_pre_ping": True}
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine_options["connect_args"] = {"check_same_thread": False}
+engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_options)
 
 # ── SQLite Foreign Key Enforcement ──
 @event.listens_for(Engine, "connect")
@@ -67,10 +70,15 @@ def migrate_sqlite_destination_metadata() -> None:
         "source_url": "VARCHAR(500)",
         "source_license": "VARCHAR(100)",
         "source_checked_at": "VARCHAR(20)",
+        "source_record_id": "VARCHAR(80)",
+        "population": "INTEGER",
+        "timezone": "VARCHAR(64)",
+        "data_quality": "VARCHAR(32) DEFAULT 'prototype'",
     }
     with engine.begin() as connection:
         columns = {row[1] for row in connection.exec_driver_sql("PRAGMA table_info(destinations)")}
         for column, definition in required.items():
             if column not in columns:
                 connection.exec_driver_sql(f"ALTER TABLE destinations ADD COLUMN {column} {definition}")
+        connection.exec_driver_sql("UPDATE destinations SET data_quality = 'prototype' WHERE data_quality IS NULL")
 

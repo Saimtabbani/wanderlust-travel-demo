@@ -120,14 +120,14 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
       style={{ animationDelay: `${delay}s` }}
     >
       {/* ── Image (fixed height, never squishes) ── */}
-      <div className="relative h-52 flex-shrink-0 overflow-hidden">
-        <img
+        <div className="relative h-52 flex-shrink-0 overflow-hidden bg-gradient-to-br from-sky-900 via-indigo-950 to-slate-950">
+        {imageUrl ? <img
           src={imageUrl}
           alt={`${name}, ${country}`}
           loading="lazy"
           decoding="async"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-        />
+        /> : <div className="w-full h-full flex items-center justify-center text-sky-200 text-lg font-bold">{name}</div>}
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
@@ -155,7 +155,7 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
 
         {/* Price badge — INR, en-IN locale */}
         <div className="absolute top-3 right-3 glass text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-          from {formatINR(price)}
+          {price > 0 ? `from ${formatINR(price)}` : 'No fare data'}
         </div>
 
         {/* Location */}
@@ -199,7 +199,7 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400 flex-shrink-0" />
-              <span className="text-sm font-bold text-white">{rating}</span>
+              <span className="text-sm font-bold text-white">{rating > 0 ? rating : '—'}</span>
               <span className="text-xs text-slate-500 ml-0.5">
                 ({reviews.toLocaleString('en-IN')})
               </span>

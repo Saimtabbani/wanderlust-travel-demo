@@ -53,6 +53,10 @@ class Destination(Base):
     source_url = Column(String(500), nullable=True)
     source_license = Column(String(100), nullable=True)
     source_checked_at = Column(String(20), nullable=True)
+    source_record_id = Column(String(80), unique=True, nullable=True, index=True)
+    population = Column(Integer, nullable=True, index=True)
+    timezone = Column(String(64), nullable=True)
+    data_quality = Column(String(32), nullable=False, default="prototype", index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     endorsements = relationship("Endorsement", back_populates="destination", cascade="all, delete-orphan")
@@ -60,6 +64,7 @@ class Destination(Base):
     __table_args__ = (
         Index("idx_dest_region_price", "region", "price_inr"),
         Index("idx_dest_category_price", "category", "price_inr"),
+        Index("idx_dest_name_country", "name", "country"),
     )
 
     def get_tags_list(self):

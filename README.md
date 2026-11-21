@@ -17,6 +17,8 @@ The current catalogue, prices, ratings, and baseline endorsement counts are demo
 
 Place identities and representative coordinates are now versioned with [Wikidata CC0 metadata](docs/DATA_PROVENANCE.md). Coordinate-based travel times are planning estimates, not live routes, schedules, fares, or safety advice.
 
+The production-scale geographical catalogue uses GeoNames CC BY 4.0; see [catalogue provenance and boundaries](docs/GEONAMES_CATALOGUE.md).
+
 ## Run locally
 
 Requirements: Node.js 20+ and Python 3.14.

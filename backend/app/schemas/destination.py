@@ -50,6 +50,10 @@ class DestinationOut(BaseModel):
     source_url: Optional[str] = None
     source_license: Optional[str] = None
     source_checked_at: Optional[str] = None
+    source_record_id: Optional[str] = None
+    population: Optional[int] = None
+    timezone: Optional[str] = None
+    data_quality: str = "prototype"
     created_at: Optional[datetime] = None
 
     @field_validator("tags", mode="before")

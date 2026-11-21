@@ -2,7 +2,7 @@ import math
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, asc
+from sqlalchemy import desc, asc, or_
 from ..database import get_db
 from ..models.destination import Destination
 from ..schemas.destination import DestinationOut, PaginatedDestinations
@@ -17,6 +17,8 @@ def list_destinations(
     region: Optional[str] = Query(None, description="Filter by region (e.g. India, Asia, Europe, South America)"),
     category: Optional[str] = Query(None, description="Filter by category (e.g. Beach, Nature, Adventure)"),
     max_budget: Optional[int] = Query(None, ge=0, description="Maximum trip budget in INR"),
+    q: Optional[str] = Query(None, min_length=2, max_length=100, description="Search destination or country name"),
+    min_population: Optional[int] = Query(None, ge=0, description="Minimum population for source-backed city records"),
     sort_by: Optional[str] = Query("endorsements", description="Sort order: endorsements, rating, price_asc, price_desc"),
     db: Session = Depends(get_db),
 ):
@@ -34,6 +36,13 @@ def list_destinations(
 
     if max_budget is not None and max_budget > 0:
         query = query.filter(Destination.price_inr <= max_budget)
+
+    if q:
+        term = f"%{q.strip()}%"
+        query = query.filter(or_(Destination.name.ilike(term), Destination.country.ilike(term)))
+
+    if min_population is not None:
+        query = query.filter(Destination.population >= min_population)
 
     # Sorting
     if sort_by == "rating":

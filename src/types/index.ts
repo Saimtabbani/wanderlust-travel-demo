@@ -25,6 +25,10 @@ export interface Destination {
   source_url?: string;
   source_license?: string;
   source_checked_at?: string;
+  source_record_id?: string;
+  population?: number;
+  timezone?: string;
+  data_quality?: string;
   created_at?: string;
   scores?: DestinationScores;
 

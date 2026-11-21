@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from ..models.destination import Destination, Endorsement, Contributor
 
 STOPWORDS = {
@@ -214,7 +214,24 @@ def get_recommendations(
     if max_budget is not None and max_budget > 0:
         stmt = stmt.filter(Destination.price_inr <= max_budget)
 
-    candidates: List[Destination] = stmt.all()
+    # A global catalogue can contain tens of thousands of records. Narrow
+    # text searches before scoring instead of loading the entire table into a
+    # serverless function. Browsing stays deterministic and is capped below.
+    if query and query.strip():
+        search_terms = clean_tokens(query)
+        if search_terms:
+            predicates = []
+            for term in search_terms[:5]:
+                match = f"%{term}%"
+                predicates.extend([
+                    Destination.name.ilike(match),
+                    Destination.country.ilike(match),
+                    Destination.category.ilike(match),
+                    Destination.tags.ilike(match),
+                ])
+            stmt = stmt.filter(or_(*predicates))
+
+    candidates: List[Destination] = stmt.limit(1000).all()
     if not candidates:
         return []
 
