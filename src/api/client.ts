@@ -42,6 +42,10 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
       throw new ApiError(response.status, message, errorData);
     }
 
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
     return (await response.json()) as T;
   } catch (error) {
     if (error instanceof ApiError) {

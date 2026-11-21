@@ -58,3 +58,14 @@ export async function fetchRecommendations(params: RecommendationParams = {}): P
 export async function fetchDestinationById(id: number, signal?: AbortSignal): Promise<Destination> {
   return apiClient<Destination>(`/destinations/${id}`, { signal });
 }
+
+export interface TravelEstimate {
+  destination_id: number;
+  distance_km: number;
+  estimated_flight_hours: number;
+  assumptions: string;
+}
+
+export async function fetchTravelEstimate(id: number, signal?: AbortSignal): Promise<TravelEstimate> {
+  return apiClient<TravelEstimate>(`/destinations/${id}/travel-estimate`, { signal });
+}

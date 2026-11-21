@@ -61,6 +61,12 @@ def recommend_destinations(
             price_inr=dest.price_inr,
             best_season=dest.best_season,
             image_url=dest.image_url,
+            latitude=dest.latitude,
+            longitude=dest.longitude,
+            source_name=dest.source_name,
+            source_url=dest.source_url,
+            source_license=dest.source_license,
+            source_checked_at=dest.source_checked_at,
             created_at=dest.created_at,
             scores=ScoreBreakdown(**scores_data)
         )

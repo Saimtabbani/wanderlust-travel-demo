@@ -1,0 +1,10 @@
+{
+  "dataset_version": "wanderlust-catalogue-v0.4",
+  "purpose": "Small, human-labelled protocol fixture for repeatable ranking checks; not a population-level evaluation dataset.",
+  "queries": [
+    {"id": "beach", "query": "beaches", "relevant": ["Goa", "Bali", "Phuket", "Maldives"]},
+    {"id": "heritage", "query": "heritage palaces", "relevant": ["Jaipur", "Udaipur", "Mysore", "Hampi"]},
+    {"id": "mountains", "query": "mountain trekking", "relevant": ["Manali", "Ladakh", "Darjeeling", "Machu Picchu"]},
+    {"id": "nature", "query": "backwaters nature", "relevant": ["Kerala Backwaters", "Munnar", "Meghalaya", "Coorg"]}
+  ]
+}

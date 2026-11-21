@@ -43,6 +43,16 @@ class Destination(Base):
     price_inr = Column(Integer, nullable=False, index=True)
     best_season = Column(String(100), nullable=False)
     image_url = Column(String(500), nullable=False)
+    # Geographic and provenance fields are deliberately separate from the
+    # editorial/demo ranking signals above.  They make it possible to show a
+    # reproducible distance estimate and to audit where each place record came
+    # from without implying that ratings, prices, or endorsements are live.
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    source_name = Column(String(100), nullable=True)
+    source_url = Column(String(500), nullable=True)
+    source_license = Column(String(100), nullable=True)
+    source_checked_at = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     endorsements = relationship("Endorsement", back_populates="destination", cascade="all, delete-orphan")
@@ -78,3 +88,37 @@ class Endorsement(Base):
         # Ensure a session can endorse a destination only once
         UniqueConstraint("destination_id", "session_id", name="uq_destination_session"),
     )
+
+
+class Account(Base):
+    """A local account with a password hash and an optional contributor profile.
+
+    This supports a deployable authentication boundary, but it still requires a
+    managed database, email verification, and a distributed rate limiter before
+    it is suitable for a public launch.
+    """
+    __tablename__ = "accounts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(254), unique=True, nullable=False, index=True)
+    display_name = Column(String(80), nullable=False)
+    password_hash = Column(String(256), nullable=False)
+    contributor_id = Column(Integer, ForeignKey("contributors.id", ondelete="SET NULL"), unique=True, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    contributor = relationship("Contributor")
+    sessions = relationship("AuthSession", back_populates="account", cascade="all, delete-orphan")
+
+
+class AuthSession(Base):
+    """Hashed, revocable bearer-token session. Raw tokens are never stored."""
+    __tablename__ = "auth_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String(64), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    revoked_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    account = relationship("Account", back_populates="sessions")

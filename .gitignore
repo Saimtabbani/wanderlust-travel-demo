@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
+evaluation/latest-results.json
 dist-ssr
 *.local
 .vercel

@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Star, ThumbsUp, TrendingUp, MapPin, Check, Loader2, Sparkles, ShieldCheck } from 'lucide-react'
+import { Star, ThumbsUp, TrendingUp, MapPin, Check, Loader2, Sparkles, ShieldCheck, Volume2, Square, Route, BookOpen } from 'lucide-react'
 import type { Destination } from '../types'
 import { formatINR } from '../utils/currency'
 import { postEndorsement, deleteEndorsement } from '../api/endorsements'
 import { getOrFetchSessionToken, getEndorsedDestinations, markDestinationEndorsed, unmarkDestinationEndorsed } from '../utils/session'
+import { fetchTravelEstimate, type TravelEstimate } from '../api/destinations'
+import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 
 interface DestinationCardProps {
   destination: Destination
@@ -38,6 +40,23 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
   const [endorsementCount, setEndorsementCount] = useState<number>(initialEndorsements)
   const [isActionInProgress, setIsActionInProgress] = useState<boolean>(false)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
+  const [travelEstimate, setTravelEstimate] = useState<TravelEstimate | null>(null)
+  const [estimateLoading, setEstimateLoading] = useState(false)
+  const { isSpeaking, isSupported: speechSupported, speak, stop } = useSpeechSynthesis()
+
+  const detailedSummary = `${name}, ${country}. ${description} The best season is ${season}. This prototype trip budget starts at ${formatINR(price)} and the community rating shown is ${rating} out of 5. Planning information is indicative; check current official travel advice and providers before booking.`
+
+  const toggleExpanded = async () => {
+    const next = !expanded
+    setExpanded(next)
+    if (next && !travelEstimate && !estimateLoading && !isNaN(numericId)) {
+      setEstimateLoading(true)
+      try { setTravelEstimate(await fetchTravelEstimate(numericId)) }
+      catch { setActionNotice('Travel estimate is temporarily unavailable.') }
+      finally { setEstimateLoading(false) }
+    }
+  }
 
   const handleToggleEndorse = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -161,9 +180,18 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
         </div>
 
         {/* Description */}
-        <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4 min-h-[2.75rem] flex-1">
+        <p className={`text-slate-400 text-sm leading-relaxed mb-3 flex-1 ${expanded ? '' : 'line-clamp-2 min-h-[2.75rem]'}`}>
           {description}
         </p>
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <button onClick={toggleExpanded} className="inline-flex items-center gap-1 text-xs font-semibold text-sky-300 hover:text-sky-200 cursor-pointer"><BookOpen className="w-3.5 h-3.5" />{expanded ? 'Show less' : 'Read trip summary'}</button>
+          {speechSupported && <button onClick={() => isSpeaking ? stop() : speak(detailedSummary)} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-300 hover:text-indigo-200 cursor-pointer">{isSpeaking ? <Square className="w-3 h-3 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}{isSpeaking ? 'Stop summary' : 'Listen'}</button>}
+        </div>
+        {expanded && <div className="mb-4 rounded-xl border border-sky-500/15 bg-sky-500/5 p-3 text-xs text-slate-300 space-y-2">
+          <p className="font-semibold text-sky-200">Planning snapshot</p>
+          {estimateLoading ? <p className="flex items-center gap-2 text-slate-400"><Loader2 className="w-3.5 h-3.5 animate-spin" />Calculating from New Delhi…</p> : travelEstimate ? <><p className="flex items-center gap-1.5"><Route className="w-3.5 h-3.5 text-sky-400" />{travelEstimate.distance_km.toLocaleString('en-IN')} km great-circle · about {travelEstimate.estimated_flight_hours} hours</p><p className="text-slate-500 leading-relaxed">{travelEstimate.assumptions}</p></> : <p className="text-slate-500">No coordinate-based estimate is available yet.</p>}
+          {destination.source_url && <a href={destination.source_url} target="_blank" rel="noreferrer" className="inline-flex text-sky-300 hover:text-sky-200 underline underline-offset-2">Place record: {destination.source_name} ({destination.source_license})</a>}
+        </div>}
 
         {/* ── Stats & Endorsement footer ── */}
         <div className="mt-auto pt-3 border-t border-white/5 space-y-2.5">

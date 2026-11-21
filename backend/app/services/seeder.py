@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from ..models.destination import Destination, Contributor, Endorsement
+from ..data.catalog_metadata import source_fields
 
 SEED_DESTINATIONS = [
     # ── INDIAN DESTINATIONS ────────────────────────────────────────────────
@@ -451,6 +452,14 @@ def seed_destinations(db: Session) -> int:
     """
     existing_count = db.query(Destination).count()
     if existing_count > 0:
+        # Backfill source fields in the supplied prototype DB without touching
+        # its editorial demo metrics. This keeps re-runs deterministic.
+        for destination in db.query(Destination).all():
+            metadata = source_fields(destination.name)
+            for key, value in metadata.items():
+                if getattr(destination, key) is None:
+                    setattr(destination, key, value)
+        db.commit()
         return existing_count
 
     # 1. Seed Destinations
@@ -470,6 +479,7 @@ def seed_destinations(db: Session) -> int:
             price_inr=d["price_inr"],
             best_season=d["best_season"],
             image_url=d["image_url"],
+            **source_fields(d["name"]),
         )
         destinations_to_add.append(dest)
 

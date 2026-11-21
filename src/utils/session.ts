@@ -3,11 +3,19 @@
  * Fetches and persists server-signed HMAC session tokens to prevent client forgery.
  */
 import { apiClient } from '../api/client';
+import { getStoredAuth } from './auth';
 
 const SESSION_TOKEN_KEY = 'wanderlust_signed_session_token';
 const ENDORSED_SET_KEY = 'wanderlust_endorsed_destinations';
 
 let cachedSessionPromise: Promise<string> | null = null;
+
+export function clearSignedSession(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(SESSION_TOKEN_KEY);
+  localStorage.removeItem(ENDORSED_SET_KEY);
+  cachedSessionPromise = null;
+}
 
 export async function getOrFetchSessionToken(): Promise<string> {
   if (typeof window === 'undefined') {
@@ -23,7 +31,10 @@ export async function getOrFetchSessionToken(): Promise<string> {
   if (!cachedSessionPromise) {
     cachedSessionPromise = (async () => {
       try {
-        const res = await apiClient<{ session_id: string }>('/session');
+        const authToken = getStoredAuth()?.access_token;
+        const res = await apiClient<{ session_id: string }>('/session', {
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+        });
         if (res && res.session_id) {
           localStorage.setItem(SESSION_TOKEN_KEY, res.session_id);
           return res.session_id;

@@ -83,7 +83,7 @@ export default function Hero({ onSearch }: HeroProps) {
   }
 
   return (
-    <section className="relative min-h-screen hero-gradient flex flex-col items-center justify-center px-6 overflow-hidden">
+    <section className="relative min-h-screen hero-gradient flex flex-col items-center justify-center px-4 sm:px-6 pt-28 sm:pt-32 pb-20 overflow-hidden">
       {/* Background orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/3 right-1/4 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -111,8 +111,8 @@ export default function Hero({ onSearch }: HeroProps) {
         className="fade-in-up mt-6 text-lg md:text-xl text-slate-400 text-center max-w-2xl leading-relaxed"
         style={{ animationDelay: '0.35s' }}
       >
-        Just speak your travel dream. Wanderlust listens, understands, and surfaces
-        destinations endorsed by real travellers who have been there.
+        Speak or type your travel dream. Wanderlust surfaces source-documented places
+        with transparent prototype recommendations and planning estimates.
       </p>
 
       {/* Search Bar Form */}
@@ -257,10 +257,10 @@ export default function Hero({ onSearch }: HeroProps) {
         style={{ animationDelay: '0.65s' }}
       >
         {[
-          { value: '50K+', label: 'Destinations' },
-          { value: '2.4M', label: 'Endorsements' },
-          { value: '180+', label: 'Countries' },
-          { value: '98%', label: 'Happy Travellers' },
+          { value: '28', label: 'Catalogue places' },
+          { value: '3', label: 'Ranking signals' },
+          { value: 'CC0', label: 'Place metadata licence' },
+          { value: 'β', label: 'Research prototype' },
         ].map((stat) => (
           <div key={stat.label}>
             <p className="text-2xl font-black gradient-text">{stat.value}</p>

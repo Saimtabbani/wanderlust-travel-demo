@@ -6,6 +6,7 @@ from sqlalchemy import desc, asc
 from ..database import get_db
 from ..models.destination import Destination
 from ..schemas.destination import DestinationOut, PaginatedDestinations
+from ..services.travel_estimates import flight_planning_estimate
 
 router = APIRouter(prefix="/destinations", tags=["destinations"])
 
@@ -70,3 +71,20 @@ def get_destination(destination_id: int, db: Session = Depends(get_db)):
             detail=f"Destination with ID {destination_id} not found."
         )
     return dest
+
+
+@router.get("/{destination_id}/travel-estimate")
+def get_travel_estimate(
+    destination_id: int,
+    origin_lat: float = Query(28.6139, ge=-90, le=90, description="Origin latitude; defaults to New Delhi"),
+    origin_lon: float = Query(77.2090, ge=-180, le=180, description="Origin longitude; defaults to New Delhi"),
+    db: Session = Depends(get_db),
+):
+    """Return a physically grounded planning estimate, not live transport data."""
+    dest = db.query(Destination).filter(Destination.id == destination_id).first()
+    if not dest:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Destination not found.")
+    estimate = flight_planning_estimate(origin_lat, origin_lon, dest.latitude, dest.longitude)
+    if not estimate:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Coordinate data is unavailable for this destination.")
+    return {"destination_id": dest.id, "origin": {"latitude": origin_lat, "longitude": origin_lon}, **estimate}

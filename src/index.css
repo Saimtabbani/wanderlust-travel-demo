@@ -9,7 +9,7 @@
     /* Offset all anchor jumps by the fixed navbar height so headings
        never land hidden behind the bar. 80px covers both the collapsed
        (py-3 ≈ 56px) and expanded (py-5 ≈ 68px) navbar states with margin. */
-    scroll-padding-top: 80px;
+    scroll-padding-top: 96px;
   }
   body {
     margin: 0;

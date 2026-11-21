@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from ..database import get_db
-from ..models.destination import Destination, Endorsement, Contributor
+from ..models.destination import Account, Destination, Endorsement, Contributor
 from ..schemas.destination import (
     EndorsementCreate,
     EndorsementWithdraw,
@@ -15,23 +15,22 @@ from ..schemas.destination import (
 )
 from ..services.security import generate_secure_session_id, verify_session_id
 from ..services.recommendation_engine import calculate_contributor_trust
+from .auth import get_optional_account
 
 router = APIRouter(tags=["endorsements"])
 
 @router.get("/session", response_model=SessionTokenOut)
-def issue_session():
+def issue_session(account: Optional[Account] = Depends(get_optional_account)):
     """
-    Issues an anonymous, cryptographically signed demo-session token.
-
-    A username cannot be supplied here: the application has no authentication
-    provider yet, so binding an arbitrary request to a contributor would allow
-    impersonation. Signed demo sessions receive the neutral trust weight.
+    Issues a signed session token. A signed-in account is bound server-side to
+    its contributor profile; anonymous visitors receive neutral demo sessions.
     """
-    token = generate_secure_session_id()
+    contributor = account.contributor if account else None
+    token = generate_secure_session_id(contributor.id if contributor else None)
 
     return SessionTokenOut(
         session_id=token,
-        contributor=None,
+        contributor=contributor,
         is_verified_session=True,
         issued_at=datetime.utcnow(),
     )

@@ -41,7 +41,8 @@ export default function DestinationsSection({ searchQuery = '', onClearSearch }:
     } else if (destinations.length > 0) {
       const count = destinations.length
       const topDest = destinations[0]
-      const speechText = `I found ${count} recommended destination${count > 1 ? 's' : ''} for your trip. ${topDest.name} in ${topDest.country} is your top recommendation.`
+      const names = destinations.slice(0, 3).map((destination) => `${destination.name} in ${destination.country}`).join(', ')
+      const speechText = `I found ${count} recommendation${count > 1 ? 's' : ''} for your trip. Your top choice is ${topDest.name} in ${topDest.country}, with a ${topDest.rating} out of 5 prototype rating and a best season of ${topDest.best_season}. Other strong matches include ${names}. Open any card to hear a fuller destination summary and see its coordinate-based planning estimate. Remember that prices, ratings, and endorsements in this research prototype are not live booking data.`
       speak(speechText)
     }
   }
@@ -158,7 +159,7 @@ export default function DestinationsSection({ searchQuery = '', onClearSearch }:
           <p className="mt-4 text-slate-400 max-w-xl mx-auto leading-relaxed">
             {searchQuery
               ? 'Ranked with a transparent 3-factor demo: endorsements, rating, and keyword relevance.'
-              : 'A curated demonstration dataset for exploring the Wanderlust recommendation experience.'}
+              : 'Source-documented place identities with transparent prototype scores. Prices, ratings, and endorsements remain research-demo fields.'}
           </p>
         </div>
 

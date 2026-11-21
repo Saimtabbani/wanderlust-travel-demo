@@ -2,17 +2,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from .database import engine, Base, get_db, SessionLocal
+from .database import engine, Base, get_db, SessionLocal, migrate_sqlite_destination_metadata
 from .models.destination import Destination, Contributor, Endorsement
 from .services.seeder import seed_destinations
 from .routes.destinations import router as destinations_router
 from .routes.endorsements import router as endorsements_router
 from .routes.recommendations import router as recommendations_router
+from .routes.auth import router as auth_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # ── Startup: Create SQLite tables and seed initial destinations & contributors ──
     Base.metadata.create_all(bind=engine)
+    migrate_sqlite_destination_metadata()
     db = SessionLocal()
     try:
         count = seed_destinations(db)
@@ -50,6 +52,7 @@ app.add_middleware(
 app.include_router(destinations_router, prefix="/api")
 app.include_router(endorsements_router, prefix="/api")
 app.include_router(recommendations_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
 
 @app.get("/api/health", tags=["system"])
 def health_check(db: Session = Depends(get_db)):

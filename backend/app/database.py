@@ -17,7 +17,9 @@ if os.getenv("VERCEL"):
     DB_PATH = runtime_db
 else:
     DB_PATH = SOURCE_DB_PATH
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH.as_posix()}"
+# A managed database URL is intentionally configurable for a production
+# deployment. SQLite remains the checked-in demo default.
+SQLALCHEMY_DATABASE_URL = os.getenv("WANDERLUST_DATABASE_URL", f"sqlite:///{DB_PATH.as_posix()}")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -47,4 +49,28 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def migrate_sqlite_destination_metadata() -> None:
+    """Add metadata columns to an existing prototype SQLite catalogue.
+
+    This is a tiny compatibility bridge for the checked-in demo database. A
+    production deployment should use versioned migrations (for example Alembic)
+    against its managed database instead.
+    """
+    if engine.dialect.name != "sqlite":
+        return
+    required = {
+        "latitude": "REAL",
+        "longitude": "REAL",
+        "source_name": "VARCHAR(100)",
+        "source_url": "VARCHAR(500)",
+        "source_license": "VARCHAR(100)",
+        "source_checked_at": "VARCHAR(20)",
+    }
+    with engine.begin() as connection:
+        columns = {row[1] for row in connection.exec_driver_sql("PRAGMA table_info(destinations)")}
+        for column, definition in required.items():
+            if column not in columns:
+                connection.exec_driver_sql(f"ALTER TABLE destinations ADD COLUMN {column} {definition}")
 

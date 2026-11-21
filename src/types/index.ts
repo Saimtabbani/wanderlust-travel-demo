@@ -19,6 +19,12 @@ export interface Destination {
   price_inr?: number;
   best_season?: string;
   image_url?: string;
+  latitude?: number;
+  longitude?: number;
+  source_name?: string;
+  source_url?: string;
+  source_license?: string;
+  source_checked_at?: string;
   created_at?: string;
   scores?: DestinationScores;
 
@@ -55,6 +61,20 @@ export interface EndorsementResponse {
 export interface NavLink {
   label: string;
   href: string;
+}
+
+export interface Account {
+  id: number;
+  email: string;
+  display_name: string;
+  created_at: string;
+}
+
+export interface AuthSession {
+  access_token: string;
+  token_type: string;
+  expires_at: string;
+  account: Account;
 }
 
 export interface HowItWorksStep {
