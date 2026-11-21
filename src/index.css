@@ -6,8 +6,6 @@
   }
   html {
     scroll-behavior: smooth;
-    /* Leave a small visual gap when jumping to a section below the sticky
-       navigation, which occupies layout space and never overlays content. */
     scroll-padding-top: 16px;
   }
   body {

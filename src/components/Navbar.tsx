@@ -39,7 +39,7 @@ export default function Navbar() {
   }
 
   return <>
-    <header className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || mobileOpen ? 'glass border-b border-white/5 py-3' : 'bg-[#0a0f1e] border-b border-white/5 py-4 sm:py-5'}`}>
+    <header className={`relative z-50 transition-all duration-300 ${scrolled || mobileOpen ? 'glass border-b border-white/5 py-3' : 'bg-[#0a0f1e] border-b border-white/5 py-4 sm:py-5'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
         <a href="#" className="flex items-center gap-2 group shrink-0" aria-label="Wanderlust home"><div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><Globe className="w-4 h-4 text-white" /></div><span className="text-lg font-bold tracking-tight"><span className="gradient-text">Wander</span><span className="text-white">lust</span></span></a>
         <nav className="hidden lg:flex items-center gap-8" aria-label="Main navigation">{navLinks.map((link) => <a key={link.label} href={link.href} className="text-sm text-slate-400 hover:text-white transition-colors font-medium">{link.label}</a>)}</nav>
