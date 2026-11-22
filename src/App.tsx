@@ -7,6 +7,7 @@ import About from './components/About'
 import CallToAction from './components/CallToAction'
 import Footer from './components/Footer'
 import MyTrips from './components/MyTrips'
+import PrivacyNotice from './components/PrivacyNotice'
 
 function App() {
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -23,6 +24,7 @@ function App() {
         <MyTrips />
         <HowItWorks />
         <About />
+        <PrivacyNotice />
         <CallToAction />
       </main>
       <Footer />

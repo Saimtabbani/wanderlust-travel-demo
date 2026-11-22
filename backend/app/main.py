@@ -1,8 +1,12 @@
 from contextlib import asynccontextmanager
+from collections import defaultdict, deque
+from time import monotonic
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 from .database import engine, Base, get_db, SessionLocal, migrate_sqlite_destination_metadata
 from .models.destination import Destination, Contributor, Endorsement
 from .services.seeder import seed_destinations
@@ -48,6 +52,41 @@ app = FastAPI(
     version="3.0.0",
     lifespan=lifespan,
 )
+
+
+class BasicRateLimitMiddleware(BaseHTTPMiddleware):
+    """Free per-instance safeguard for anonymous demo traffic.
+
+    A commercial deployment should use a distributed limiter, because Vercel
+    can run more than one function instance.
+    """
+    def __init__(self, app, max_requests: int = 120, window_seconds: int = 60):
+        super().__init__(app)
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.requests = defaultdict(deque)
+
+    async def dispatch(self, request, call_next):
+        if request.url.path == "/api/health":
+            return await call_next(request)
+        client = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
+        key = f"{client}:{request.url.path}"
+        now = monotonic()
+        calls = self.requests[key]
+        while calls and calls[0] <= now - self.window_seconds:
+            calls.popleft()
+        if len(calls) >= self.max_requests:
+            return JSONResponse(status_code=429, content={"detail": "Too many requests. Please wait a minute and try again."}, headers={"Retry-After": str(self.window_seconds)})
+        calls.append(now)
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), geolocation=(), payment=()"
+        return response
+
+
+app.add_middleware(BasicRateLimitMiddleware)
 
 # ── CORS configuration for React frontend ──
 app.add_middleware(

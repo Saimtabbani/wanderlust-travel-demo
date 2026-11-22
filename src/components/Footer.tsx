@@ -3,7 +3,7 @@ import { Globe, ExternalLink } from 'lucide-react'
 const footerLinks = {
   Product: ['Discover', 'Voice Search', 'Endorsements', 'Itinerary Planner'],
   Company: ['About Us', 'Blog', 'Careers', 'Press'],
-  Support: ['Help Center', 'Privacy Policy', 'Terms of Service', 'Contact'],
+  Support: ['Privacy Policy', 'Data Provenance', 'Contact'],
 }
 
 const socials = [
@@ -30,7 +30,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
-              The voice-enabled, endorsement-based travel platform that puts real travellers at the centre of every recommendation.
+              A source-aware, voice-enabled travel discovery final-year project. It does not provide bookings, payment processing, or live travel advice.
             </p>
             <div className="flex gap-3 mt-5">
               {socials.map(({ label }) => (
@@ -55,7 +55,7 @@ export default function Footer() {
                 {links.map((link) => (
                   <li key={link}>
                     <a
-                      href="#"
+                      href={link === 'Privacy Policy' ? '#privacy' : link === 'Data Provenance' ? 'https://www.geonames.org/' : 'mailto:project-owner@example.invalid'}
                       className="text-sm text-slate-500 hover:text-white transition-colors"
                     >
                       {link}
