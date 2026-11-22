@@ -8,6 +8,7 @@ import { clearSignedSession } from '../utils/session'
 
 const navLinks = [
   { label: 'Discover', href: '#discover' },
+  { label: 'My Trips', href: '#my-trips' },
   { label: 'How It Works', href: '#how-it-works' },
   { label: 'About', href: '#about' },
 ]
@@ -27,6 +28,7 @@ export default function Navbar() {
   const signOut = async () => {
     const current = getStoredAuth()
     clearStoredAuth()
+    window.dispatchEvent(new Event('wanderlust:auth-changed'))
     clearSignedSession()
     setAccount(null)
     setMobileOpen(false)

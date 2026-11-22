@@ -20,7 +20,7 @@ export default function AuthDialog({ onClose, onAuthenticated }: AuthDialogProps
       const session = mode === 'create'
         ? await registerAccount({ email, display_name: displayName, password })
         : await loginAccount({ email, password })
-      clearSignedSession(); storeAuth(session); onAuthenticated(session.account); onClose()
+      clearSignedSession(); storeAuth(session); window.dispatchEvent(new Event('wanderlust:auth-changed')); onAuthenticated(session.account); onClose()
     } catch (caught: any) { setError(caught?.message || 'We could not complete that request.') }
     finally { setSubmitting(false) }
   }

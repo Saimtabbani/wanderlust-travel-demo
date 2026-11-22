@@ -29,6 +29,9 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
 
   // Handle both backend API field names and fallback aliases
   const imageUrl = destination.image_url || destination.image || ''
+  const representativeImage = country.toLowerCase() === 'india'
+    ? 'https://images.unsplash.com/photo-1716747713277-1eb420cf67e4?auto=format&fit=crop&w=1200&q=80'
+    : 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=80'
   const price = destination.price_inr ?? destination.priceINR ?? 0
   const reviews = destination.review_count ?? destination.reviews ?? 0
   const initialEndorsements = destination.endorsement_count ?? destination.endorsements ?? 0
@@ -152,15 +155,16 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
     >
       {/* ── Image (fixed height, never squishes) ── */}
         <div className="relative h-52 flex-shrink-0 overflow-hidden bg-gradient-to-br from-sky-900 via-indigo-950 to-slate-950">
-        {imageUrl ? <img
-          src={imageUrl}
-          alt={`${name}, ${country}`}
+        <img
+          src={imageUrl || representativeImage}
+          alt={imageUrl ? `${name}, ${country}` : `Representative travel image for ${country}`}
           loading="lazy"
           decoding="async"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-        /> : <div className="w-full h-full flex items-center justify-center text-sky-200 text-lg font-bold">{name}</div>}
+        />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        {!imageUrl && <span className="absolute bottom-3 right-3 z-10 rounded-full bg-slate-950/65 px-2 py-1 text-[11px] text-slate-200 backdrop-blur">Representative image</span>}
 
         {/* Badges container */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 items-center">

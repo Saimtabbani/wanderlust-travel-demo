@@ -6,6 +6,7 @@ import HowItWorks from './components/HowItWorks'
 import About from './components/About'
 import CallToAction from './components/CallToAction'
 import Footer from './components/Footer'
+import MyTrips from './components/MyTrips'
 
 function App() {
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -19,6 +20,7 @@ function App() {
           searchQuery={searchQuery}
           onClearSearch={() => setSearchQuery('')}
         />
+        <MyTrips />
         <HowItWorks />
         <About />
         <CallToAction />

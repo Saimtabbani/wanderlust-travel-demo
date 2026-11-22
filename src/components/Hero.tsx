@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, Mic, Sparkles, AlertCircle, X, Square } from 'lucide-react'
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition'
+import { apiClient } from '../api/client'
 
 interface HeroProps {
   onSearch?: (query: string) => void
@@ -8,6 +9,7 @@ interface HeroProps {
 
 export default function Hero({ onSearch }: HeroProps) {
   const [searchValue, setSearchValue] = useState('')
+  const [catalogueCount, setCatalogueCount] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleSearchTrigger = (term: string) => {
@@ -58,6 +60,10 @@ export default function Hero({ onSearch }: HeroProps) {
       window.removeEventListener('wanderlust:start-voice-search', handleGlobalVoiceTrigger)
     }
   }, [isListening, startListening])
+
+  useEffect(() => {
+    apiClient<{ destinations_count: number }>('/health').then((health) => setCatalogueCount(health.destinations_count)).catch(() => undefined)
+  }, [])
 
   const suggestions = [
     'beaches in Goa & Bali',
@@ -257,10 +263,10 @@ export default function Hero({ onSearch }: HeroProps) {
         style={{ animationDelay: '0.65s' }}
       >
         {[
-          { value: '28', label: 'Catalogue places' },
+          { value: catalogueCount ? `${catalogueCount.toLocaleString('en-IN')}+` : '50K+', label: 'source-backed places' },
           { value: '3', label: 'Ranking signals' },
-          { value: 'CC0', label: 'Place metadata licence' },
-          { value: 'β', label: 'Research prototype' },
+          { value: 'CC BY 4.0', label: 'catalogue licence' },
+          { value: 'Free', label: 'student project stack' },
         ].map((stat) => (
           <div key={stat.label}>
             <p className="text-2xl font-black gradient-text">{stat.value}</p>

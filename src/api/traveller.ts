@@ -35,3 +35,6 @@ export const createTripPlan = (payload: { title: string; notes?: string }, token
 
 export const addDestinationToTrip = (tripId: number, destinationId: number, token: string) =>
   apiClient<TripPlan>(`/traveller/trips/${tripId}/destinations/${destinationId}`, { method: 'POST', headers: authHeader(token) })
+
+export const deleteTripPlan = (tripId: number, token: string) =>
+  apiClient<void>(`/traveller/trips/${tripId}`, { method: 'DELETE', headers: authHeader(token) })
