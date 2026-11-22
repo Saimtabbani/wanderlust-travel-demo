@@ -2,7 +2,7 @@ import math
 import re
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import func, or_
 from ..models.destination import Destination, Endorsement, Contributor
 
@@ -104,8 +104,23 @@ def get_global_corpus_stats(db: Session):
     Ensures that filtering candidates by region, category, or budget does NOT alter
     the destination's underlying Bayesian prior.
     """
-    all_dests = db.query(Destination).all()
-    if not all_dests:
+    # Keep global priors database-side. Loading every destination here was
+    # acceptable for the 28-place prototype, but becomes an N+1 query storm
+    # with a real catalogue. Individual candidate endorsements are still
+    # calculated exactly below; the global prior uses stored baseline values.
+    base_endorsements = func.coalesce(
+        Destination.baseline_endorsements,
+        Destination.endorsement_count,
+        0,
+    )
+    mean_endorsements, max_endorsements, mean_rating, count = db.query(
+        func.avg(base_endorsements),
+        func.max(base_endorsements),
+        func.avg(Destination.rating),
+        func.count(Destination.id),
+    ).one()
+
+    if not count:
         return {
             "mean_endorsements": 10000.0,
             "max_endorsements": 25000.0,
@@ -113,19 +128,11 @@ def get_global_corpus_stats(db: Session):
             "count": 0,
         }
 
-    now = datetime.utcnow()
-    effective_counts = [compute_effective_endorsement_count(d, now) for d in all_dests]
-    ratings = [d.rating for d in all_dests]
-
-    mean_endorsements = sum(effective_counts) / len(effective_counts) if effective_counts else 10000.0
-    max_endorsements = max(effective_counts) if effective_counts else 25000.0
-    mean_rating = sum(ratings) / len(ratings) if ratings else 4.7
-
     return {
-        "mean_endorsements": mean_endorsements,
-        "max_endorsements": max_endorsements,
-        "mean_rating": mean_rating,
-        "count": len(all_dests),
+        "mean_endorsements": float(mean_endorsements or 0.0),
+        "max_endorsements": float(max_endorsements or 0.0),
+        "mean_rating": float(mean_rating or 0.0),
+        "count": int(count),
     }
 
 def calculate_relevance(
@@ -231,7 +238,9 @@ def get_recommendations(
                 ])
             stmt = stmt.filter(or_(*predicates))
 
-    candidates: List[Destination] = stmt.limit(1000).all()
+    candidates: List[Destination] = stmt.options(
+        selectinload(Destination.endorsements).selectinload(Endorsement.contributor)
+    ).limit(1000).all()
     if not candidates:
         return []
 
