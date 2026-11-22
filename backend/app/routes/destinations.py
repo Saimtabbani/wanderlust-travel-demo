@@ -10,6 +10,18 @@ from ..services.travel_estimates import flight_planning_estimate
 
 router = APIRouter(prefix="/destinations", tags=["destinations"])
 
+
+def apply_catalogue_region_filter(query, region: str):
+    """Bridge the curated labels and GeoNames continent codes."""
+    label = region.strip().lower()
+    if label == "india":
+        return query.filter(Destination.country.ilike("India"))
+    continent_codes = {"asia": "AS", "europe": "EU", "south america": "SA"}
+    code = continent_codes.get(label)
+    if code:
+        return query.filter(or_(Destination.region.ilike(region), Destination.region == code))
+    return query.filter(Destination.region.ilike(region))
+
 @router.get("", response_model=PaginatedDestinations)
 def list_destinations(
     page: int = Query(1, ge=1, description="Page number starting at 1"),
@@ -29,7 +41,7 @@ def list_destinations(
 
     # Filtering
     if region and region.lower() != "all":
-        query = query.filter(Destination.region.ilike(region))
+        query = apply_catalogue_region_filter(query, region)
 
     if category and category.lower() != "all":
         query = query.filter(Destination.category.ilike(category))

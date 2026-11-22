@@ -213,7 +213,13 @@ def get_recommendations(
     stmt = db.query(Destination)
 
     if region and region.lower() != "all":
-        stmt = stmt.filter(Destination.region.ilike(region))
+        label = region.strip().lower()
+        if label == "india":
+            stmt = stmt.filter(Destination.country.ilike("India"))
+        else:
+            continent_codes = {"asia": "AS", "europe": "EU", "south america": "SA"}
+            code = continent_codes.get(label)
+            stmt = stmt.filter(or_(Destination.region.ilike(region), Destination.region == code) if code else Destination.region.ilike(region))
 
     if category and category.lower() != "all":
         stmt = stmt.filter(Destination.category.ilike(category))
