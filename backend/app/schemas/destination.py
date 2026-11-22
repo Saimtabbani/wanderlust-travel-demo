@@ -164,3 +164,42 @@ class AuthSessionOut(BaseModel):
     token_type: str = "bearer"
     expires_at: datetime
     account: AccountPublic
+
+
+class FavoriteOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    destination: DestinationOut
+    created_at: datetime
+
+
+class TripPlanCreate(BaseModel):
+    title: str
+    notes: str = ""
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, value: str) -> str:
+        title = value.strip()
+        if not 2 <= len(title) <= 100:
+            raise ValueError("Trip title must be 2–100 characters.")
+        return title
+
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, value: str) -> str:
+        if len(value) > 2000:
+            raise ValueError("Trip notes must be at most 2,000 characters.")
+        return value.strip()
+
+
+class TripPlanOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    notes: str
+    created_at: datetime
+    updated_at: datetime
+    destinations: List[DestinationOut]

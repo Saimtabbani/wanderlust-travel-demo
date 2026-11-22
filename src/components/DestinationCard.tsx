@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Star, ThumbsUp, TrendingUp, MapPin, Check, Loader2, Sparkles, ShieldCheck, Volume2, Square, Route, BookOpen } from 'lucide-react'
+import { Star, ThumbsUp, TrendingUp, MapPin, Check, Loader2, Sparkles, ShieldCheck, Volume2, Square, Route, BookOpen, Heart } from 'lucide-react'
 import type { Destination } from '../types'
 import { formatINR } from '../utils/currency'
 import { postEndorsement, deleteEndorsement } from '../api/endorsements'
 import { getOrFetchSessionToken, getEndorsedDestinations, markDestinationEndorsed, unmarkDestinationEndorsed } from '../utils/session'
 import { fetchTravelEstimate, type TravelEstimate } from '../api/destinations'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
+import { getStoredAuth } from '../utils/auth'
+import { saveDestination, unsaveDestination } from '../api/traveller'
 
 interface DestinationCardProps {
   destination: Destination
@@ -43,6 +45,8 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
   const [expanded, setExpanded] = useState(false)
   const [travelEstimate, setTravelEstimate] = useState<TravelEstimate | null>(null)
   const [estimateLoading, setEstimateLoading] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
+  const [saveLoading, setSaveLoading] = useState(false)
   const { isSpeaking, isSupported: speechSupported, speak, stop } = useSpeechSynthesis()
 
   const detailedSummary = `${name}, ${country}. ${description} The best season is ${season}. This prototype trip budget starts at ${formatINR(price)} and the community rating shown is ${rating} out of 5. Planning information is indicative; check current official travel advice and providers before booking.`
@@ -111,6 +115,33 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
       }
     } finally {
       setIsActionInProgress(false)
+    }
+  }
+
+  const handleToggleSaved = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const auth = getStoredAuth()
+    if (!auth) {
+      setActionNotice('Sign in to save destinations and build a trip plan.')
+      return
+    }
+    if (isNaN(numericId) || saveLoading) return
+    setSaveLoading(true)
+    setActionNotice(null)
+    try {
+      if (isSaved) {
+        await unsaveDestination(numericId, auth.access_token)
+        setIsSaved(false)
+        setActionNotice('Removed from your saved destinations.')
+      } else {
+        await saveDestination(numericId, auth.access_token)
+        setIsSaved(true)
+        setActionNotice('Saved to your traveller account.')
+      }
+    } catch (err: any) {
+      setActionNotice(err?.message || 'Could not update your saved destinations.')
+    } finally {
+      setSaveLoading(false)
     }
   }
 
@@ -248,6 +279,16 @@ export default function DestinationCard({ destination, delay = 0, onEndorsementS
               )}
             </button>
           </div>
+
+          <button
+            onClick={handleToggleSaved}
+            disabled={saveLoading}
+            className={`w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-all cursor-pointer border ${isSaved ? 'bg-rose-500/15 text-rose-200 border-rose-400/30' : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 hover:text-white'}`}
+            title={isSaved ? 'Remove from your saved destinations' : 'Save destination to your traveller account'}
+          >
+            {saveLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Heart className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />}
+            {isSaved ? 'Saved to your trips' : 'Save destination'}
+          </button>
 
           {actionNotice && (
             <p className="text-[11px] text-amber-400 text-right">{actionNotice}</p>

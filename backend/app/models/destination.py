@@ -113,6 +113,8 @@ class Account(Base):
 
     contributor = relationship("Contributor")
     sessions = relationship("AuthSession", back_populates="account", cascade="all, delete-orphan")
+    favorites = relationship("Favorite", back_populates="account", cascade="all, delete-orphan")
+    trip_plans = relationship("TripPlan", back_populates="account", cascade="all, delete-orphan")
 
 
 class AuthSession(Base):
@@ -127,3 +129,49 @@ class AuthSession(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     account = relationship("Account", back_populates="sessions")
+
+
+class Favorite(Base):
+    """A durable saved destination belonging to a signed-in traveller."""
+    __tablename__ = "favorites"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    destination_id = Column(Integer, ForeignKey("destinations.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    account = relationship("Account", back_populates="favorites")
+    destination = relationship("Destination")
+
+    __table_args__ = (UniqueConstraint("account_id", "destination_id", name="uq_favorite_account_destination"),)
+
+
+class TripPlan(Base):
+    """A private, named collection of destinations for a traveller."""
+    __tablename__ = "trip_plans"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(100), nullable=False)
+    notes = Column(Text, nullable=False, default="")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    account = relationship("Account", back_populates="trip_plans")
+    stops = relationship("TripStop", back_populates="trip_plan", cascade="all, delete-orphan", order_by="TripStop.position")
+
+
+class TripStop(Base):
+    """An ordered destination inside a traveller's private trip plan."""
+    __tablename__ = "trip_stops"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    trip_plan_id = Column(Integer, ForeignKey("trip_plans.id", ondelete="CASCADE"), nullable=False, index=True)
+    destination_id = Column(Integer, ForeignKey("destinations.id", ondelete="CASCADE"), nullable=False, index=True)
+    position = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    trip_plan = relationship("TripPlan", back_populates="stops")
+    destination = relationship("Destination")
+
+    __table_args__ = (UniqueConstraint("trip_plan_id", "destination_id", name="uq_trip_plan_destination"),)
