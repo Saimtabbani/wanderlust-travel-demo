@@ -31,15 +31,15 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
 engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_options)
 
 # ── SQLite Foreign Key Enforcement ──
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    """
-    Ensure SQLite enforces foreign key constraints and cascade actions on every connection.
-    By default, SQLite disables foreign keys.
-    """
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+# Register this listener only for SQLite.  A global Engine listener also runs
+# for PostgreSQL connections, where PRAGMA is not valid SQL.
+if engine.dialect.name == "sqlite":
+    @event.listens_for(Engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        """Ensure SQLite enforces foreign key constraints and cascade actions."""
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
