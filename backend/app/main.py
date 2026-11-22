@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from .database import engine, Base, get_db, SessionLocal, migrate_sqlite_destination_metadata
 from .models.destination import Destination, Contributor, Endorsement
@@ -13,17 +14,30 @@ from .routes.catalog_admin import router as catalog_admin_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── Startup: Create SQLite tables and seed initial destinations & contributors ──
-    Base.metadata.create_all(bind=engine)
-    migrate_sqlite_destination_metadata()
-    db = SessionLocal()
-    try:
-        count = seed_destinations(db)
-        contrib_count = db.query(Contributor).count()
-        endr_count = db.query(Endorsement).count()
-        print(f"[Wanderlust Stage 3] Database initialized: {count} destinations, {contrib_count} contributors, {endr_count} relational endorsements.")
-    finally:
-        db.close()
+    # Vercel can start more than one function instance at the same time.
+    # PostgreSQL's advisory lock makes schema creation and initial seeding a
+    # single-file queue, avoiding concurrent CREATE TABLE collisions.
+    def initialize_database() -> None:
+        Base.metadata.create_all(bind=engine)
+        migrate_sqlite_destination_metadata()
+        db = SessionLocal()
+        try:
+            count = seed_destinations(db)
+            contrib_count = db.query(Contributor).count()
+            endr_count = db.query(Endorsement).count()
+            print(f"[Wanderlust Stage 3] Database initialized: {count} destinations, {contrib_count} contributors, {endr_count} relational endorsements.")
+        finally:
+            db.close()
+
+    if engine.dialect.name == "postgresql":
+        with engine.connect() as lock_connection:
+            lock_connection.execute(text("SELECT pg_advisory_lock(734920185)"))
+            try:
+                initialize_database()
+            finally:
+                lock_connection.execute(text("SELECT pg_advisory_unlock(734920185)"))
+    else:
+        initialize_database()
     yield
     # ── Shutdown ──
 
